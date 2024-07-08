@@ -1,0 +1,6 @@
+name: bactopia
+channels: 
+  - conda-forge
+  - bioconda
+dependencies:
+  - bactopia

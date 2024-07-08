@@ -1,0 +1,6 @@
+res_*/
+.nextflow*
+.tmp_*
+.snakemake*
+
+

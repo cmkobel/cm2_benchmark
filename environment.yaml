@@ -1,0 +1,7 @@
+name: ac2_benchmark
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - mamba
+  - snakemake

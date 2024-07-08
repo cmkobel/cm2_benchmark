@@ -1,0 +1,8 @@
+name: asscom2
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - assemblycomparator2=2.6.2
+
+# TODO: Make a bioconda package instead of having users manually create an env from this file when installing.

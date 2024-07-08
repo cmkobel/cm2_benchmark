@@ -1,0 +1,164 @@
+```{r}
+library(tidyverse)
+
+
+
+df_raw = read_tsv(
+    Sys.glob("../benchmarks/*.tsv"),
+    id = "file",
+    #col_names =  c("time_user", "time_system", "time_elapsed", "cpu_percent", "text_k", "data_k", "max_k", "inputs", "outputs", "major_pf", "minor_pf", "swaps")
+)
+df = df_raw %>% 
+    separate_wider_regex(
+        file,
+        c(
+            "\\.\\./benchmarks/",
+            pipeline = "asscom2|tormes|asscom2dm|asscom2bt|bactopia",
+            "_n",
+            n = "\\d+",
+            "_t" ,
+            t = "\\d+",
+            "_r",
+            r = "[abc]",
+            "_s",
+            taxa = "prevotella|methanobrevibacteraceae",
+            "\\.txt"
+        ),
+        cols_remove = F,
+        too_few = "align_start"
+    ) %>% 
+    mutate(
+    comparison = case_when(
+        pipeline %in% c("tormes", "asscom2") ~ "Tormes VS Assemblycomparator2",
+        pipeline %in% c("bactopia", "asscom2bt") ~ "Bactopia VS Assemblycomparator2"
+        
+        
+    ),
+    pipeline = case_when(
+            #pipeline == "asscom2" ~ "Assemblycomparator2 (Tormes mode)",
+            #pipeline == "asscom2bt" ~ "Assemblycomparator2 (Bactopia mode)",
+            pipeline %in% c("asscom2", "asscom2bt") ~ "Assemblycomparator2",
+            pipeline == "tormes" ~ "Tormes",
+            pipeline == "bactopia" ~ "Bactopia",
+            
+            
+        ),
+    genus = case_when(
+        taxa == "prevotella" ~ "Prevotella",
+        taxa == "methanobrevibacteraceae" ~ "Methanobrevibacter"
+    )) %>% 
+    mutate(n = n %>% as.numeric()) 
+```
+
+```{r}
+df %>% 
+    ggplot(aes(n, s, color = pipeline)) + 
+    geom_point() + 
+    geom_line(alpha = 0.6) + 
+
+    
+    #facet_grid(comparison~paste0(genus, ", ", t, " cores"), scales = "free") + # wastes space in time
+    #facet_grid(paste0(genus, ", ", t, " cores")~comparison, scales = "free") +  # wastes space in |input|
+    facet_wrap(comparison~genus, scales = "free") +  # wastes space in |input|
+    #ggforce::facet_row(~paste(genus, "\n",comparison), scales = "free") + # Harder to campare.
+
+    
+    labs(
+        x = "number of input genomes",
+        y = "running time [s]\n(real time)",
+    )
+```
+
+
+
+
+
+```{r}
+
+library(magrittr)
+df %>% 
+    filter(n == 32, t == 32) %>% 
+    group_by(pipeline, genus) %>% 
+    summarize(s = mean(s)) %>% 
+    #pivot_wider(names_from = pipeline, values_from = s) %>%  
+    
+    pivot_wider(names_from = genus, values_from = s, names_prefix = "seconds_") %>%  
+    
+    ungroup() %>% 
+    mutate(
+        factor_Methanobrevibacter = seconds_Methanobrevibacter/min(seconds_Methanobrevibacter),
+        factor_Prevotella = seconds_Prevotella/min(seconds_Prevotella, na.rm = T),
+    ) %>% 
+    pivot_longer(-pipeline) %>% 
+    mutate(value = round(value, 1)) %>% 
+    pivot_wider(names_from = pipeline, values_from = value) %>% 
+    arrange(name) %>% 
+    mutate(order = c(2, 4, 1, 3)) %>% arrange(order) %>% select(-order) %>% 
+    rename(` ` = name)  %T>% 
+    write_tsv("graphics/table20.tsv")
+    
+
+# The whole point is to show what the complexity is, not that bactopia is slower. So I don't think I will stress this table
+
+```
+
+Add error bars
+```{r}
+df = df %>% 
+    filter(n != 1) %>% 
+    filter(!(taxa == "prevotella" & n == 44)) %>% 
+    identity()
+
+# First create a summarized version, then plot raw data points on top.
+p1 = df %>% 
+    #filter(taxa == "methanobrevibacteraceae") %>% 
+    #filter(taxa == "prevotella") %>% 
+    
+    group_by(comparison, genus, pipeline, n, t) %>% 
+    summarize(s_mean = mean(s), s_sd = sd(s), n()) %>% 
+    
+    # Manually scale the width of the error bars to the size of the plot window.
+    mutate(bar_factor = case_when(
+        genus == "Prevotella" ~ 124/44,
+        genus == "Methanobrevibacter" ~ 1,
+    )) %>% 
+    identity() %>% 
+
+    ggplot(aes(x = n, y = s_mean, color = pipeline)) +
+    
+    geom_vline(xintercept = 32, alpha = 0.2, linetype = "dashed") +
+    
+    facet_wrap(comparison~paste0(genus), scales = "free") +  # wastes space in |input|
+    #facet_grid(comparison~genus) +
+
+    # Using summarized means
+    geom_errorbar(aes(ymin = s_mean - s_sd, ymax = s_mean + s_sd, width = bar_factor*2), alpha = 1, color = "grey65") + # Error bars might not be necessary when showing the raw data.
+    geom_point() +
+    geom_line(alpha = 0.5, linetype = "solid") + 
+
+
+    labs(
+        x = "number of input genomes",
+        y = "running time [s]",
+    ) +
+    theme_light() +
+    theme(
+        legend.position = "bottom"
+    ); p1
+ggsave("graphics/fig_input_time.png", height = 6, width = 8)
+```
+
+
+```{r}
+
+```
+
+```{r}
+#library(patchwork)
+#p1 + p2 + patchwork::plot_annotation(tag_levels = "A")
+
+
+
+
+```
+

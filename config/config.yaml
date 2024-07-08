@@ -1,0 +1,9 @@
+
+  
+var: some
+# Better to explicitly set these via the command line.
+#n: 2 # The number of samples.
+#t: 32 # The number of threads that each program is asked to run with. 
+
+
+
