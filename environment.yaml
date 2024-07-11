@@ -1,4 +1,4 @@
-name: ac2_benchmark
+name: cm2_benchmark
 channels:
   - conda-forge
   - bioconda
