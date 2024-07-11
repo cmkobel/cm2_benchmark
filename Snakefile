@@ -1,4 +1,5 @@
-# snakemake 
+# conda activate cm2_benchmark
+# snakemake --profile profile/default --config n=2 t=32 s=methanobrevibacteraceae
 
 
 # Field variables
