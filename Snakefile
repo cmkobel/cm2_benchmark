@@ -127,6 +127,7 @@ rule asscom2:
                 fofn={output.dir}/fofn.txt \
                 prokka_rfam=false \
                 output_directory={output.dir} \
+                prokka_kingdom=archaea \
             --until prokka abricate assembly_stats mlst panaroo gtdbtk
     
 
