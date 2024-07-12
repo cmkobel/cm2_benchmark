@@ -1,5 +1,4 @@
- 	Assemblycomparator2	Bactopia	Tormes
-seconds_Methanobrevibacter	428.2	1237	1725.8
-factor_Methanobrevibacter	1	2.9	4
-seconds_Prevotella	740.4	1442.4	2000.4
-factor_Prevotella	1	1.9	2.7
+pipeline	minutes_Methanobrevibacter	factor_Methanobrevibacter	minutes_Prevotella	factor_Prevotella
+CompareM2	6.6	1	29.7	1
+Bactopia	27	4.1	91	3.1
+Tormes	47.7	7.2	230.5	7.8

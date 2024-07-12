@@ -29,15 +29,15 @@ df = df_raw %>%
     ) %>% 
     mutate(
     comparison = case_when(
-        pipeline %in% c("tormes", "asscom2") ~ "Tormes VS Assemblycomparator2",
-        pipeline %in% c("bactopia", "asscom2bt") ~ "Bactopia VS Assemblycomparator2"
+        pipeline %in% c("tormes", "asscom2") ~ "Tormes VS CompareM2",
+        pipeline %in% c("bactopia", "asscom2bt") ~ "Bactopia VS CompareM2"
         
         
     ),
     pipeline = case_when(
             #pipeline == "asscom2" ~ "Assemblycomparator2 (Tormes mode)",
             #pipeline == "asscom2bt" ~ "Assemblycomparator2 (Bactopia mode)",
-            pipeline %in% c("asscom2", "asscom2bt") ~ "Assemblycomparator2",
+            pipeline %in% c("asscom2", "asscom2bt") ~ "CompareM2",
             pipeline == "tormes" ~ "Tormes",
             pipeline == "bactopia" ~ "Bactopia",
             
@@ -47,8 +47,13 @@ df = df_raw %>%
         taxa == "prevotella" ~ "Prevotella",
         taxa == "methanobrevibacteraceae" ~ "Methanobrevibacter"
     )) %>% 
+    mutate(s = s/60) %>% 
+    
+    
     mutate(n = n %>% as.numeric()) 
 ```
+
+Naive plot
 
 ```{r}
 df %>% 
@@ -77,26 +82,35 @@ df %>%
 
 library(magrittr)
 df %>% 
-    filter(n == 32, t == 32) %>% 
+    #filter(n == 32, t == 32) %>% 
+    filter(genus == "Methanobrevibacter" & n == 44 | genus == "Prevotella" & n == 124) %>% 
     group_by(pipeline, genus) %>% 
     summarize(s = mean(s)) %>% 
     #pivot_wider(names_from = pipeline, values_from = s) %>%  
     
-    pivot_wider(names_from = genus, values_from = s, names_prefix = "seconds_") %>%  
+    pivot_wider(names_from = genus, values_from = s, names_prefix = "minutes_") %>%  
     
     ungroup() %>% 
     mutate(
-        factor_Methanobrevibacter = seconds_Methanobrevibacter/min(seconds_Methanobrevibacter),
-        factor_Prevotella = seconds_Prevotella/min(seconds_Prevotella, na.rm = T),
+        factor_Methanobrevibacter = minutes_Methanobrevibacter/min(minutes_Methanobrevibacter),
+        factor_Prevotella = minutes_Prevotella/min(minutes_Prevotella, na.rm = T),
     ) %>% 
-    pivot_longer(-pipeline) %>% 
-    mutate(value = round(value, 1)) %>% 
-    pivot_wider(names_from = pipeline, values_from = value) %>% 
-    arrange(name) %>% 
-    mutate(order = c(2, 4, 1, 3)) %>% arrange(order) %>% select(-order) %>% 
-    rename(` ` = name)  %T>% 
+    select(pipeline, ends_with("Methanobrevibacter"), ends_with("Prevotella")) %>% 
+    #mutate(across(is.numeric, round)) %>% 
+    arrange(minutes_Methanobrevibacter) %>% 
+    mutate(across(where(is.numeric), round, 1)) %T>% 
     write_tsv("graphics/table20.tsv")
-    
+
+
+    # pivot_longer(-pipeline) %>% 
+    # mutate(value = round(value, 1)) %>% 
+    # pivot_wider(names_from = pipeline, values_from = value) %>% 
+    # arrange(name) %>% 
+    # mutate(order = c(2, 4, 1, 3)) %>% arrange(order) %>% select(-order) %>% 
+    # rename(` ` = name)  %T>% 
+    # select(` `, CompareM2, Bactopia, Tormes) %>% 
+    # write_tsv("graphics/table20.tsv")
+    # 
 
 # The whole point is to show what the complexity is, not that bactopia is slower. So I don't think I will stress this table
 
@@ -135,15 +149,13 @@ p1 = df %>%
     geom_errorbar(aes(ymin = s_mean - s_sd, ymax = s_mean + s_sd, width = bar_factor*2), alpha = 1, color = "grey65") + # Error bars might not be necessary when showing the raw data.
     geom_point() +
     geom_line(alpha = 0.5, linetype = "solid") + 
-
-
     labs(
         x = "number of input genomes",
-        y = "running time [s]",
+        y = "running time [minutes]",
     ) +
     theme_light() +
     theme(
-        legend.position = "bottom"
+        #legend.position = "bottom"
     ); p1
 ggsave("graphics/fig_input_time.png", height = 6, width = 8)
 ```
