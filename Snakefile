@@ -1,5 +1,5 @@
 # conda activate cm2_benchmark
-# snakemake --profile profile/default --config n=2 t=32 s=methanobrevibacteraceae
+# snakemake --profile profile/default --config n=4 t=32 s=methanobrevibacteraceae
 
 
 # Field variables
@@ -14,6 +14,15 @@ configfile: "config/config.yaml"
 
 """
 
+# These should be rerun
+# 32
+snakemake --profile profile/default --config n=4 t=32 s=methanobrevibacteraceae --until asscom2 asscom2bt
+snakemake --profile profile/default --config n=32 t=32 s=methanobrevibacteraceae --until asscom2 asscom2bt
+snakemake --profile profile/default --config n=8 t=32 s=methanobrevibacteraceae --until asscom2 asscom2bt
+snakemake --profile profile/default --config n=16 t=32 s=methanobrevibacteraceae --until asscom2 asscom2bt
+snakemake --profile profile/default --config n=44 t=32 s=methanobrevibacteraceae --until asscom2 asscom2bt
+snakemake --profile profile/default --config n=2 t=32 s=methanobrevibacteraceae --until asscom2 asscom2bt
+ 
 # 32
 snakemake --profile profile/default --config n=2 t=32 s=methanobrevibacteraceae
 snakemake --profile profile/default --config n=4 t=32 s=methanobrevibacteraceae
@@ -118,11 +127,11 @@ rule asscom2:
         head {output.dir}/fofn.txt
 
         
-        export ASSCOM2_BASE="$(realpath ~/asscom2)"
-        export ASSCOM2_PROFILE="${{ASSCOM2_BASE}}/profile/conda/default"
+        export COMPAREM2_BASE="$(realpath ~/comparem2)"
+        export COMPAREM2_PROFILE="${{COMPAREM2_BASE}}/profile/conda/default"
         
         
-        ${{ASSCOM2_BASE}}/asscom2 \
+        ${{COMPAREM2_BASE}}/comparem2 \
             --cores {wildcards.t} \
             --config \
                 fofn={output.dir}/fofn.txt \
@@ -187,16 +196,17 @@ rule asscom2bt:
         head {output.dir}/fofn.txt
 
         
-        export ASSCOM2_BASE="$(realpath ~/asscom2)"
-        export ASSCOM2_PROFILE="${{ASSCOM2_BASE}}/profile/conda/default"
+        export COMPAREM2_BASE="$(realpath ~/comparem2)"
+        export COMPAREM2_PROFILE="${{COMPAREM2_BASE}}/profile/conda/default"
         
         
-        ${{ASSCOM2_BASE}}/asscom2 \
+        ${{COMPAREM2_BASE}}/comparem2 \
             --cores {wildcards.t} \
             --config \
                 fofn={output.dir}/fofn.txt \
                 prokka_rfam=false \
                 output_directory={output.dir} \
+                prokka_kingdom=archaea \
             --until sequence_lengths assembly_stats prokka abricate mlst
         
 
